@@ -1,0 +1,56 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, reopened, labeled, unlabeled, synchronize]
+
+jobs:
+  run-ci:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: docker
+          POSTGRES_PASSWORD: docker
+          POSTGRES_DB: brev_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://docker:docker@localhost:5432/brev_test
+          NODE_ENV: test
+          CLOUDFLARE_ACCOUNT_ID: test
+          CLOUDFLARE_ACCESS_KEY_ID: test
+          CLOUDFLARE_ACCESS_SECRET_KEY: test
+          CLOUDFLARE_BUCKET: test
+          CLOUDFLARE_PUBLIC_URL: https://example.com
+        run: pnpm run test

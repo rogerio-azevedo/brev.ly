@@ -1,0 +1,24 @@
+# PostgreSQL local. Usuário/senha/DB: docker / docker / brev (use em DATABASE_URL).
+#
+# Depois de subir pela primeira vez ou após `docker compose down -v`, é obrigatório aplicar
+# migrações na pasta server/ (com .env carregado):
+#   pnpm run db:migrate:local
+#   # ou: yarn db:migrate:local
+#
+# Sem isso, a API retorna erro "relation links does not exist".
+services:
+  pg:
+    image: postgres:16-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: brev
+    volumes:
+      - './docker:/docker-entrypoint-initdb.d'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U docker -d brev']
+      interval: 3s
+      timeout: 5s
+      retries: 10

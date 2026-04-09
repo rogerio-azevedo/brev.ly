@@ -1,0 +1,15 @@
+@theme {
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: #2c46b1;
+  --color-primary-dark: #2c4091;
+  --color-danger: #b12c4d;
+
+  --color-surface: #f9f9fb;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e4e6ec;
+  --color-border-strong: #cdcfd5;
+  --color-muted: #74798b;
+  --color-foreground: #1f2025;
+  --color-foreground-secondary: #4d505c;
+}

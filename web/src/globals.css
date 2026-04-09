@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+
+@layer theme;
+@import './theme.css' layer(theme);
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply m-0 min-h-dvh bg-border font-sans text-foreground;
+  }
+
+  #root {
+    @apply min-h-dvh;
+  }
+}
