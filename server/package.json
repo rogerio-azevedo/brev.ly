@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "test": "vitest run",
+    "test": "vitest run --fileParallelism=false",
     "test:watch": "vitest",
     "db:generate": "tsx --env-file .env node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "drizzle-kit migrate",

@@ -1,3 +1,4 @@
+import { Warning } from '@phosphor-icons/react'
 import { type InputHTMLAttributes, forwardRef, useId } from 'react'
 import { tv, type VariantProps } from 'tailwind-variants'
 
@@ -38,13 +39,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {errorMessage ? (
-          <p
-            id={errorId}
-            className="mt-1.5 text-xs font-medium text-danger"
-            role="alert"
-          >
-            {errorMessage}
-          </p>
+          <div className="mt-1.5 flex items-center gap-1.5 text-danger" role="alert">
+            <Warning className="size-3.5" weight="bold" />
+            <p id={errorId} className="text-xs font-medium">
+              {errorMessage}
+            </p>
+          </div>
         ) : null}
       </div>
     )

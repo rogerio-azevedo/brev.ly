@@ -11,11 +11,11 @@ export type Right<U> = {
 export type Either<T, U> = NonNullable<Left<T> | Right<U>>
 
 export const isLeft = <T, U>(e: Either<T, U>): e is Left<T> => {
-  return e.left !== undefined
+  return 'left' in e
 }
 
 export const isRight = <T, U>(e: Either<T, U>): e is Right<U> => {
-  return e.right !== undefined
+  return 'right' in e
 }
 
 export type UnwrapEither = <T, U>(e: Either<T, U>) => NonNullable<T | U>

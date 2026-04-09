@@ -31,6 +31,8 @@ export function LinkList() {
         sortBy: 'createdAt',
         sortDirection: 'desc',
       }),
+    staleTime: 0,
+    refetchInterval: 10_000,
   })
 
   if (isPending) {

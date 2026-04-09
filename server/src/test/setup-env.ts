@@ -18,7 +18,5 @@ for (const line of readFileSync(envPath, 'utf8').split('\n')) {
   ) {
     value = value.slice(1, -1)
   }
-  if (process.env[key] === undefined) {
-    process.env[key] = value
-  }
+  process.env[key] = value
 }
