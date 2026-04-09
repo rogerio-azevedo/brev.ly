@@ -1,31 +1,44 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
 
-WORKDIR /app
+RUN npm i -g pnpm@8
 
-COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable pnpm && pnpm install --frozen-lockfile
+FROM base AS dependencies
+
+WORKDIR /usr/src/app
+
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install
+
+FROM base AS build
+
+WORKDIR /usr/src/app
 
 COPY . .
+COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+
 RUN pnpm build
+RUN pnpm prune --prod
 
-# Production stage
-FROM node:20-alpine AS runner
+FROM node:20-alpine AS deploy
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-ENV NODE_ENV=production
+# Non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 appuser
 
-COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
-COPY --from=builder --chown=appuser:nodejs /app/package.json ./
-COPY --from=builder --chown=appuser:nodejs /app/src/infra/db/migrations ./src/infra/db/migrations
-COPY --from=builder --chown=appuser:nodejs /app/drizzle.config.ts ./
-COPY --from=builder --chown=appuser:nodejs /app/node_modules ./node_modules
+COPY --from=build --chown=appuser:nodejs /usr/src/app/dist ./dist
+COPY --from=build --chown=appuser:nodejs /usr/src/app/node_modules ./node_modules
+COPY --from=build --chown=appuser:nodejs /usr/src/app/package.json ./package.json
+
+# Copy migrations and config for db:migrate
+COPY --from=build --chown=appuser:nodejs /usr/src/app/src/infra/db/migrations ./src/infra/db/migrations
+COPY --from=build --chown=appuser:nodejs /usr/src/app/drizzle.config.ts ./
 
 USER appuser
 
 EXPOSE 3333
 
-CMD ["sh", "-c", "pnpm db:migrate && node dist/server.js"]
+# Run migrations and then start the server
+CMD ["sh", "-c", "npx drizzle-kit migrate && node dist/server.js"]
