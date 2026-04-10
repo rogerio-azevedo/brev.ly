@@ -24,12 +24,13 @@ export async function uploadFileToStorage(input: UploadFileToStorageInput) {
     throw new Error('Storage is not configured')
   }
 
-  const fileExtension = extname(fileName)
-  const fileWithoutExtension = basename(fileName)
-  const sanitizeFileName = fileWithoutExtension.replace(/[^a-zA-Z0-9]/g, '')
-  const sanitizeFileNameWithExtension = sanitizeFileName.concat(fileExtension)
+  const fileExtension = extname(fileName) || '.csv'
+  const base = basename(fileName, fileExtension)
+  const sanitized = base.replace(/[^a-zA-Z0-9._-]/g, '') || 'file'
+  const objectBase =
+    folder === 'downloads' && contentType === 'text/csv' ? 'links' : sanitized
 
-  const uniqueFileName = `${folder}/${randomUUID()}-${sanitizeFileNameWithExtension}`
+  const uniqueFileName = `${folder}/${randomUUID()}-${objectBase}${fileExtension}`
 
   const upload = new Upload({
     client,

@@ -17,19 +17,24 @@ const exportLinksToCsvInput = z.object({
 
 export type ExportLinksToCsvInput = z.input<typeof exportLinksToCsvInput>
 
-/** Linhas do cursor `pg` usam nomes físicos das colunas (snake_case), não as chaves do `.select()` do Drizzle. */
 function rowFromPgCursor(chunk: unknown): {
+  id: string
   original_url: string
   short_url: string
   access_count: number
   created_at: Date
 } {
   const r = chunk as Record<string, unknown>
+  const idRaw = r.id
+  const id = typeof idRaw === 'string' ? idRaw : String(idRaw ?? '')
   const originalUrl = r.original_url ?? r.originalUrl
   const shortUrl = r.short_url ?? r.shortUrl
   const accessCount = r.access_count ?? r.accessCount
   const createdRaw = r.created_at ?? r.createdAt
 
+  if (!id) {
+    throw new TypeError('CSV export: linha inválida (ID ausente)')
+  }
   if (typeof originalUrl !== 'string' || typeof shortUrl !== 'string') {
     throw new TypeError('CSV export: linha inválida (URL ausente)')
   }
@@ -45,6 +50,7 @@ function rowFromPgCursor(chunk: unknown): {
     throw new TypeError('CSV export: data de criação inválida')
   }
   return {
+    id,
     original_url: originalUrl,
     short_url: shortUrl,
     access_count: access,
@@ -72,6 +78,7 @@ function startLinksCsvExport(
 
   const { sql: sqlText, params } = db
     .select({
+      id: schema.links.id,
       originalUrl: schema.links.originalUrl,
       shortUrl: schema.links.shortUrl,
       accessCount: schema.links.accessCount,
@@ -88,10 +95,11 @@ function startLinksCsvExport(
     delimiter: ',',
     header: true,
     columns: [
-      { key: 'original_url', header: 'URL original' },
-      { key: 'short_url', header: 'URL encurtada' },
-      { key: 'access_count', header: 'Contagem de acessos' },
-      { key: 'created_at', header: 'Data de criação' },
+      { key: 'id', header: 'ID' },
+      { key: 'original_url', header: 'URL Original' },
+      { key: 'short_url', header: 'Código Curto' },
+      { key: 'access_count', header: 'Quantidade de Acessos' },
+      { key: 'created_at', header: 'Data de Criação' },
     ],
   })
 
@@ -106,6 +114,7 @@ function startLinksCsvExport(
           for (const chunk of chunks) {
             const row = rowFromPgCursor(chunk)
             this.push({
+              id: row.id,
               original_url: row.original_url,
               short_url: row.short_url,
               access_count: row.access_count,

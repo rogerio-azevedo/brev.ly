@@ -1,14 +1,13 @@
 import { Copy, Trash } from '@phosphor-icons/react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { Button } from '@/components/common/button'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
-import { linkQueryKeys } from '@/lib/query-keys'
 import { buildShortLinkUrl } from '@/lib/short-url'
 import { getApiErrorMessage, isAxiosApiError } from '@/services/api'
-import { deleteLink } from '@/services/links-service'
+import { deleteLink, incrementLinkAccess } from '@/services/links-service'
 import type { Link } from '@/types/link'
 
 const accessFormatter = new Intl.NumberFormat('pt-BR')
@@ -20,10 +19,10 @@ function formatAccessCount(count: number): string {
 
 type LinkRowProps = {
   link: Link
+  onRefetch: () => void
 }
 
-export function LinkRow({ link }: LinkRowProps) {
-  const queryClient = useQueryClient()
+export function LinkRow({ link, onRefetch }: LinkRowProps) {
   const [copied, setCopied] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -44,9 +43,23 @@ export function LinkRow({ link }: LinkRowProps) {
       toast.error(getApiErrorMessage(err, 'Não foi possível remover o link'))
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: linkQueryKeys.all })
+      onRefetch()
     },
   })
+
+  async function handleLinkClick(e: React.MouseEvent) {
+    e.preventDefault()
+
+    try {
+      await incrementLinkAccess(link.shortUrl)
+
+      window.open(link.originalUrl, '_blank', 'noreferrer')
+
+      onRefetch()
+    } catch {
+      window.open(shortHref, '_blank', 'noreferrer')
+    }
+  }
 
   async function handleCopy() {
     try {
@@ -66,8 +79,7 @@ export function LinkRow({ link }: LinkRowProps) {
           <p className="truncate text-sm font-semibold text-primary">
             <a
               href={shortHref}
-              target="_blank"
-              rel="noreferrer"
+              onClick={handleLinkClick}
               className="hover:underline"
             >
               {shortHref}

@@ -3,7 +3,7 @@ import { exportLinksToCsv } from '@/app/functions/export-links-to-csv'
 import { db } from '@/infra/db'
 import { schema } from '@/infra/db/schemas'
 import * as upload from '@/infra/storage/upload-file-to-storage'
-import { isRight, unwrapEither } from '@/shared/either'
+import { isRight } from '@/shared/either'
 import { makeLink } from '@/test/factories/make-link'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -35,19 +35,25 @@ describe('exportLinksToCsv', () => {
     const sut = await exportLinksToCsv({ searchQuery: pattern })
 
     expect(isRight(sut)).toBe(true)
-    expect(unwrapEither(sut).reportUrl).toBe('https://example.com/file.csv')
+    if (!isRight(sut)) {
+      throw new Error('expected exportLinksToCsv to succeed')
+    }
+    expect(sut.right.reportUrl).toBe('https://example.com/file.csv')
 
     const lines = capturedCsv.trim().split('\n')
-    expect(lines[0]).toContain('URL original')
-    expect(lines[0]).toContain('URL encurtada')
-    expect(lines[0]).toContain('Contagem de acessos')
-    expect(lines[0]).toContain('Data de criação')
+    expect(lines[0]).toContain('ID')
+    expect(lines[0]).toContain('URL Original')
+    expect(lines[0]).toContain('Código Curto')
+    expect(lines[0]).toContain('Quantidade de Acessos')
+    expect(lines[0]).toContain('Data de Criação')
     expect(lines.length).toBeGreaterThanOrEqual(3)
 
     const dataLines = lines.slice(1).map(line => line.split(','))
-    const shortUrls = dataLines.map(cols => cols[1])
+    const shortUrls = dataLines.map(cols => cols[2])
     expect(shortUrls).toEqual(
       expect.arrayContaining([link1.shortUrl, link2.shortUrl])
     )
+    expect(capturedCsv).toContain(link1.id)
+    expect(capturedCsv).toContain(link2.id)
   })
 })

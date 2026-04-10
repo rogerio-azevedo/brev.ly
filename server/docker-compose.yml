@@ -1,24 +1,34 @@
-# PostgreSQL local. Usuário/senha/DB: docker / docker / brev (use em DATABASE_URL).
-#
-# Depois de subir pela primeira vez ou após `docker compose down -v`, é obrigatório aplicar
-# migrações na pasta server/ (com .env carregado):
-#   pnpm run db:migrate:local
-#   # ou: yarn db:migrate:local
-#
-# Sem isso, a API retorna erro "relation links does not exist".
 services:
   pg:
     image: postgres:16-alpine
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
       POSTGRES_DB: brev
     volumes:
-      - './docker:/docker-entrypoint-initdb.d'
+      - "./docker:/docker-entrypoint-initdb.d"
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U docker -d brev']
+      test: ["CMD-SHELL", "pg_isready -U docker -d brev"]
       interval: 3s
       timeout: 5s
       retries: 10
+
+  app:
+    build: .
+    ports:
+      - "3333:3333"
+    environment:
+      DATABASE_URL: postgresql://docker:docker@pg:5432/brev
+      PORT: ${PORT:-3333}
+      NODE_ENV: ${NODE_ENV:-development}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID}
+      CLOUDFLARE_ACCESS_KEY_ID: ${CLOUDFLARE_ACCESS_KEY_ID}
+      CLOUDFLARE_ACCESS_SECRET_KEY: ${CLOUDFLARE_ACCESS_SECRET_KEY}
+      CLOUDFLARE_SECRET_ACCESS_KEY: ${CLOUDFLARE_SECRET_ACCESS_KEY}
+      CLOUDFLARE_BUCKET: ${CLOUDFLARE_BUCKET}
+      CLOUDFLARE_PUBLIC_URL: ${CLOUDFLARE_PUBLIC_URL}
+    depends_on:
+      pg:
+        condition: service_healthy

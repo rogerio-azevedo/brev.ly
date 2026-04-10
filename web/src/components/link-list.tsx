@@ -33,6 +33,7 @@ export function LinkList() {
       }),
     staleTime: 0,
     refetchInterval: 10_000,
+    refetchOnWindowFocus: 'always',
   })
 
   if (isPending) {
@@ -87,7 +88,7 @@ export function LinkList() {
         {links.map((link) => (
           <li key={link.id} className="mt-4 flex flex-col">
             <div className="mb-4 h-px w-full bg-border" aria-hidden />
-            <LinkRow link={link} />
+            <LinkRow link={link} onRefetch={refetch} />
           </li>
         ))}
       </ul>
